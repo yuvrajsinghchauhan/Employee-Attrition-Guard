@@ -1,0 +1,3 @@
+Run app.py file in Visual Studio code it will automatically open the program in the Default Browser.
+
+If it doesn't then copy paste the URL from the terminal of Visual Studio code in the browser after running it.

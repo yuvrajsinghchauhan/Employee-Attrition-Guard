@@ -1,91 +1,86 @@
-## Overview
+# AttritionGuard — Employee Attrition Early-Warning & Retention Intelligence
 
-Salifort Motors is facing a high employee turnover rate, which negatively impacts corporate culture and increases hiring and training costs. To address this issue, the company wants to predict employee attrition using self-reported survey data. By identifying key drivers behind employee departures, Salifort can develop targeted retention strategies, improve workplace satisfaction, and reduce operational disruptions.
+A local Python/Streamlit utility that imports employee data, applies a transparent rule-based attrition risk score, explains the main risk drivers, identifies employees needing attention, groups similar risk profiles into personas, and recommends targeted retention actions.
 
-## Business Understanding
+## Why this version is structured as an application
 
-The senior leadership at Salifort Motors wants to create a supportive corporate culture that fosters employee success and professional growth. However, due to high turnover rates, the company is facing significant challenges such as:
+The assignment brief asks the solution to import employee data, calculate an attrition risk score, highlight high-risk employees, and recommend interventions. It also explicitly permits assumptions and scope expansion. This version therefore uses a decision-support workflow rather than a single scrolling dashboard:
 
-* Increased recruitment and training costs.
+1. **Executive Overview** — headline KPIs, risk distribution, department hotspots, common drivers, and a priority employee queue.
+2. **Risk Explorer** — filterable employee table plus interactive relationship analysis.
+3. **Employee Profile** — individual risk score, context, contribution by factor, explanation, and recommended next steps.
+4. **Risk Personas** — K-Means grouping of medium/high-risk employees based on the seven interpretable score components.
+5. **Retention Actions** — an action queue grouped by common risk drivers plus a top-priority review list and CSV export.
+6. **Methodology** — weights, thresholds, rule logic, risk bands, and validation against historical attrition.
 
-* Loss of skilled and experienced employees.
+## Run the app
 
-* Declining employee morale and productivity.
+### Easiest option — VS Code
+Open the project folder in VS Code, select the Python environment where the requirements are installed, open `app.py`, and click **Run Python File** (the play button in the top-right).
 
-By using data-driven analysis, the HR team aims to identify the primary factors influencing employee turnover, predict which employees are likely to leave, and implement strategies to improve retention.
+`app.py` is designed to start Streamlit automatically, open the browser at `http://localhost:8501`, and locate `HR_dataset.csv` relative to the script. It does not depend on whatever folder VS Code happens to use as the current working directory.
 
-## Data Understanding
+### Command line
+You can also run:
 
-The dataset (HR_capstone_dataset.csv) contains 14,999 rows of employee self-reported information, representing various attributes that may contribute to turnover. The dataset includes 10 columns:
+```bash
+python app.py
+```
 
-| **Feature**               | **Description** |
-|---------------------------|----------------|
-| `satisfaction_level`      | Employee satisfaction score (0-1). |
-| `last_evaluation`        | Performance review score (0-1). |
-| `number_project`        | Number of projects the employee contributes to. |
-| `average_monthly_hours` | Average hours worked per month. |
-| `time_spend_company`    | Years spent at the company. |
-| `work_accident`         | Whether an accident occurred (`0 = No, 1 = Yes`). |
-| `left`                 | Whether the employee left (`0 = No, 1 = Yes`). |
-| `promotion_last_5years` | Promotion history (`0 = No, 1 = Yes`). |
-| `department`           | Employee’s department (categorical). |
-| `salary`              | Salary level (`low, medium, high`). |
+or:
 
-Key questions to explore:
+```bash
+python -m streamlit run app.py
+```
 
-* How does satisfaction level affect retention?
+### Windows launcher
+Double-click `RUN_APP.bat` to start the same local Streamlit application.
 
-* Do employees with more projects or long working hours leave more frequently?
+## Project structure
 
-* Does salary play a significant role in turnover?
+```text
+attrition_risk_utility/
+├── app.py
+├── main.py
+├── config.py
+├── HR_dataset.csv
+├── RULES_AND_METHODOLOGY.md
+├── requirements.txt
+├── modules/
+│   ├── data_loader.py
+│   ├── risk_scoring.py
+│   ├── recommendations.py
+│   ├── clustering.py
+│   └── report_generator.py
+├── output/
+└── .streamlit/
+    └── config.toml
+```
 
-* Does lack of promotion lead to higher attrition rates?
+## Risk model
 
-## Modeling and Evaluation
+The score is a weighted 0–100 sum of seven transparent components:
 
-To predict employee attrition, we will explore multiple models:
+| Factor | Weight |
+|---|---:|
+| Satisfaction | 30 |
+| Workload | 15 |
+| Working hours | 15 |
+| Tenure zone | 10 |
+| No recent promotion | 10 |
+| Salary band | 10 |
+| Silent-burnout flight risk | 10 |
 
-1. Logistic Regression 🧠 (Statistical approach)
-   * Simple model for understanding key predictors.
-   * Provides interpretability but may not capture complex relationships.
+Risk bands:
 
-2. Decision Tree & Random Forest 🌲 (Machine Learning approach)
-   * Helps identify important features.
-   * Can handle interactions between variables.
-   * Random Forest improves accuracy by reducing overfitting.
-     
-3. XGBoost 🚀 (Advanced ML approach)
-   * Optimized gradient boosting model for high accuracy.
-   * Ideal for structured datasets like HR data.
+- **High:** 65–100
+- **Medium:** 35–64
+- **Low:** 0–34
 
-## Evaluation Metrics:
+The historical `left` outcome is not used as an input into the score; it is used afterward to validate whether higher rule-based risk is associated with actual historical attrition.
 
-* Accuracy: How well the model predicts attrition.
+See `RULES_AND_METHODOLOGY.md` for the complete rule definitions and business rationale.
 
-* Precision & Recall: Ensuring correct identification of employees likely to leave.
 
-* ROC Curve & Feature Importance: Understanding which factors drive turnover.
-
-## Conclusion
-
-From the analysis, key factors contributing to employee attrition include: 
-
-✔ Low satisfaction levels – Employees unhappy with their work environment are more likely to leave. 
-
-✔ High work hours & project overload – Employees working longer hours and multiple projects face burnout. 
-
-✔ Lack of promotion – Employees who haven't been promoted in the last 5 years seek opportunities elsewhere. 
-
-✔ Salary impact – Those with low salaries are more prone to leaving, especially in demanding roles.
-
-## Recommendations:
-
-🔹 Improve Employee Satisfaction – Increase engagement, work-life balance, and feedback mechanisms. 
-
-🔹 Reduce Workload Strain – Ensure fair project distribution and encourage well-being initiatives. 
-
-🔹 Career Growth & Promotions – Offer development programs, upskilling, and internal career progression. 
-
-🔹 Compensation Review – Align salaries with industry standards and performance metrics.
-
-By implementing these strategies, Salifort Motors can significantly reduce employee turnover, improve workplace culture, and ensure long-term success.
+### Presentation labels
+The raw HR dataset keeps its original department keys (for example `product_mng` and `randd`) so that the scoring and data-loading logic remain compatible with the supplied file. The application converts these values to business-friendly labels such as **Product Management** and **R&D** everywhere they are shown to the user. The Risk Explorer relationship selectors likewise use readable labels such as **Number of Projects**, **Working Hours**, **Tenure (Years)**, and **Last Evaluation** instead of raw CSV field names.
